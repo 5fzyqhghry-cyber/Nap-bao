@@ -3,211 +3,546 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-<title>Bud Farm Tycoon</title>
+<title>🌿 Grow Simulator</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-:root{--bg:var(--tg-theme-bg-color,#1a1a1a);--text:var(--tg-theme-text-color,#fff);--hint:var(--tg-theme-hint-color,#aaa);--button:var(--tg-theme-button-color,#2ea043);--button-text:var(--tg-theme-button-text-color,#fff);--secondary:var(--tg-theme-secondary-bg-color,#2a2a2a);--accent:#4caf50;--danger:#e53935;--warning:#ffb300;--purple:#9c27b0;--blue:#2196f3}
+/* ========== БАЗОВЫЕ ПЕРЕМЕННЫЕ ========== */
+:root {
+  --bg: #0d1a0d;
+  --text: #e0e0e0;
+  --hint: #8a9a8a;
+  --button: #2e7d32;
+  --button-text: #fff;
+  --secondary: #1a2e1a;
+  --accent: #4caf50;
+  --danger: #e53935;
+  --warning: #ffb300;
+  --purple: #7b1fa2;
+  --blue: #1e88e5;
+  --soil: #3e2723;
+  --pot-color: #5d4037;
+}
+
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:20px;overflow-x:hidden}
-.header{position:sticky;top:0;z-index:100;background:var(--secondary);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding-bottom: 20px;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(ellipse at 20% 50%, rgba(46,125,50,0.15) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 50%, rgba(27,94,32,0.1) 0%, transparent 60%);
+}
+
+/* ========== ЗАГОЛОВОК ========== */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(13,26,13,0.92);
+  backdrop-filter: blur(12px);
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(76,175,80,0.2);
+}
 .stats{display:flex;gap:12px;font-size:13px;font-weight:600;flex-wrap:wrap}
-.stat{display:flex;align-items:center;gap:3px}.stat span{color:var(--accent)}
-.tabs{display:flex;background:var(--secondary);border-bottom:1px solid rgba(255,255,255,.1);overflow-x:auto}
-.tab{flex:1;min-width:68px;padding:10px 4px;text-align:center;font-size:12px;font-weight:600;cursor:pointer;opacity:.55}
-.tab.active{opacity:1;border-bottom:3px solid var(--accent);color:var(--accent)}
+.stat{display:flex;align-items:center;gap:3px;background:rgba(255,255,255,0.05);padding:4px 10px;border-radius:20px}
+.stat span{color:var(--accent)}
+
+/* ========== ТАБЫ ========== */
+.tabs {
+  display: flex;
+  background: rgba(26,46,26,0.8);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  overflow-x: auto;
+  padding: 4px 0;
+}
+.tab {
+  flex: 1;
+  min-width: 60px;
+  padding: 10px 4px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: all 0.3s;
+  border-bottom: 2px solid transparent;
+}
+.tab.active{opacity:1;border-bottom-color:var(--accent);color:var(--accent)}
+
+/* ========== КОНТЕНТ ========== */
 .content{padding:12px}.section{display:none}.section.active{display:block}
-.farm-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.pot{background:var(--secondary);border-radius:14px;padding:12px 8px;text-align:center;min-height:185px;display:flex;flex-direction:column;justify-content:space-between;border:2px solid transparent;position:relative;overflow:hidden}
-.pot.ready{border-color:var(--accent);animation:pulse 1.5s infinite}
-.pot.needs-water{border-color:var(--blue)}.pot.sick{border-color:var(--danger);animation:disease-shake 0.5s ease-in-out infinite alternate}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(76,175,80,.4)}50%{box-shadow:0 0 0 8px rgba(76,175,80,0)}}
-@keyframes disease-shake{0%{transform:translateX(-2px) rotate(-1deg)}100%{transform:translateX(2px) rotate(1deg)}}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
-.pot-glow{position:absolute;inset:-20px;border-radius:50%;pointer-events:none;opacity:0;transition:opacity .5s ease;z-index:0}
-.pot-glow.active{opacity:0.3}
+
+/* ========== ФЕРМА - СЕТКА ========== */
+.farm-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+/* ========== ГОРШОК ========== */
+.pot {
+  background: linear-gradient(145deg, #1a2e1a, #0d1a0d);
+  border-radius: 20px;
+  padding: 14px 10px 12px;
+  text-align: center;
+  border: 1px solid rgba(76,175,80,0.15);
+  position: relative;
+  overflow: hidden;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+.pot::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(to top, var(--soil), transparent);
+  border-radius: 0 0 20px 20px;
+  opacity: 0.3;
+}
+
+/* ====== ГОРШОК СВЕЧЕНИЕ ====== */
+.pot-glow {
+  position: absolute;
+  inset: -20px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  z-index: 0;
+}
+.pot-glow.active{opacity:0.25}
 .glow-cfl{background:radial-gradient(circle,#ffeb3b 0%,transparent 70%)}
 .glow-led{background:radial-gradient(circle,#4caf50 0%,transparent 70%)}
 .glow-hps{background:radial-gradient(circle,#ff9800 0%,transparent 70%)}
 .glow-quantum{background:radial-gradient(circle,#e040fb 0%,transparent 70%)}
 .pot-glow.pulsing{animation:pulse-glow 2s ease-in-out infinite}
-@keyframes pulse-glow{0%,100%{opacity:0.25;transform:scale(1)}50%{opacity:0.45;transform:scale(1.05)}}
-.light-beam{position:absolute;top:-30px;left:50%;transform:translateX(-50%);width:60%;height:40px;background:linear-gradient(to bottom,rgba(255,255,200,0.2),transparent);clip-path:polygon(20% 0%,80% 0%,100% 100%,0% 100%);pointer-events:none;opacity:0;transition:opacity .8s ease;z-index:1}
-.light-beam.active{opacity:0.6}
-.pot-emoji{font-size:34px;line-height:1;margin-bottom:4px;position:relative;z-index:2}
-.pot-name{font-size:12px;font-weight:600;position:relative;z-index:2}
-.pot-status{font-size:11px;color:var(--hint);margin:2px 0 6px;position:relative;z-index:2}
-.bars{display:flex;flex-direction:column;gap:3px;margin-bottom:6px;position:relative;z-index:2}
-.bar-row{display:flex;align-items:center;gap:4px;font-size:10px}.bar-row span{width:14px}
-.bar{flex:1;height:4px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden}
-.bar-fill{height:100%;border-radius:2px;transition:width .3s}
-.bar-fill.water{background:#2196f3}.bar-fill.health{background:#4caf50}.bar-fill.light{background:#ffb300}
-.pot-actions{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;position:relative;z-index:2}
-.btn{background:var(--button);color:var(--button-text);border:none;border-radius:10px;padding:8px 10px;font-size:11px;font-weight:600;cursor:pointer}
-.btn:active{transform:scale(.96)}.btn:disabled{opacity:.4}
-.btn-secondary{background:rgba(255,255,255,.12);color:var(--text)}
-.btn-blue{background:var(--blue);color:#fff}.btn-warning{background:var(--warning);color:#111}
-.btn-purple{background:var(--purple)}.btn-small{padding:5px 8px;font-size:10px}.btn-full{width:100%}
-.card-list{display:flex;flex-direction:column;gap:8px}
-.card{background:var(--secondary);border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px}
-.card-emoji{font-size:28px;width:40px;text-align:center}.card-info{flex:1;min-width:0}
-.card-title{font-weight:600;font-size:13px}.card-desc{font-size:11px;color:var(--hint)}
-.card-price{font-weight:700;color:var(--accent);font-size:13px}
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:flex-end;justify-content:center;z-index:200;padding:12px}
+@keyframes pulse-glow{0%,100%{opacity:0.15}50%{opacity:0.35}}
+
+/* ====== РАСТЕНИЕ (SVG) ====== */
+.plant-container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 120px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+.plant-container svg {
+  width: 90px;
+  height: 110px;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+  transition: all 0.5s ease;
+}
+.plant-container svg.ready {
+  animation: sway 2s ease-in-out infinite;
+}
+@keyframes sway {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+
+/* ====== СТАТУСЫ ====== */
+.pot-status{font-size:11px;color:var(--hint);margin:2px 0 4px;z-index:1;position:relative}
+.pot-name{font-size:12px;font-weight:700;z-index:1;position:relative;color:#c8e6c9}
+
+/* ====== БАРЫ ====== */
+.bars{width:100%;display:flex;flex-direction:column;gap:2px;margin:4px 0;z-index:1;position:relative}
+.bar-row{display:flex;align-items:center;gap:4px;font-size:9px}
+.bar-row span{width:14px;font-size:10px}
+.bar{flex:1;height:4px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width 0.5s ease}
+.bar-fill.water{background:linear-gradient(90deg,#1565c0,#42a5f5)}
+.bar-fill.health{background:linear-gradient(90deg,#2e7d32,#66bb6a)}
+.bar-fill.light{background:linear-gradient(90deg,#f57f17,#ffb300)}
+
+/* ====== КНОПКИ ====== */
+.pot-actions{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;z-index:1;position:relative;width:100%}
+.btn {
+  background: var(--button);
+  color: var(--button-text);
+  border: none;
+  border-radius: 12px;
+  padding: 7px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(46,125,50,0.3);
+}
+.btn:active{transform:scale(0.95)}
+.btn-secondary{background:rgba(255,255,255,0.08);color:var(--text);box-shadow:none}
+.btn-blue{background:var(--blue);box-shadow:0 2px 8px rgba(30,136,229,0.3)}
+.btn-warning{background:var(--warning);color:#111;box-shadow:0 2px 8px rgba(255,179,0,0.3)}
+.btn-purple{background:var(--purple);box-shadow:0 2px 8px rgba(123,31,162,0.3)}
+.btn-danger{background:var(--danger);box-shadow:0 2px 8px rgba(229,57,53,0.3)}
+.btn-full{width:100%}
+.btn-small{padding:4px 8px;font-size:10px}
+.btn:disabled{opacity:0.4}
+
+/* ====== ТЕГИ ====== */
+.boost-tag {
+  display: inline-block;
+  background: rgba(33,150,243,0.2);
+  color: #64b5f6;
+  font-size: 8px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  margin-left: 2px;
+}
+.boost-tag.fert{background:rgba(255,179,0,0.2);color:#ffb300}
+.boost-tag.sick{background:rgba(229,57,53,0.3);color:#ef5350;animation:blink 0.8s infinite}
+
+/* ====== ПРЕДУПРЕЖДЕНИЕ О ВРЕДИТЕЛЯХ ====== */
+.disease-warning {
+  background: rgba(229,57,53,0.15);
+  border-radius: 8px;
+  padding: 3px 8px;
+  margin: 4px 0;
+  font-size: 10px;
+  color: #ef5350;
+  border: 1px solid rgba(229,57,53,0.3);
+  z-index: 1;
+  position: relative;
+  animation: blink 1s infinite;
+}
+
+/* ====== ОСТАЛЬНЫЕ СТИЛИ ====== */
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}
+.pot.ready{border-color:var(--accent);box-shadow:0 0 30px rgba(76,175,80,0.15)}
+.pot.needs-water{border-color:var(--blue)}
+.pot.sick{border-color:var(--danger);animation:shake 0.4s ease-in-out infinite alternate}
+@keyframes shake{0%{transform:translateX(-1px)}100%{transform:translateX(1px)}}
+
+.empty{text-align:center;padding:30px 12px;color:var(--hint)}
+.empty-emoji{font-size:40px;margin-bottom:8px}
+.level-badge{background:var(--purple);color:#fff;font-size:11px;padding:3px 10px;border-radius:12px;font-weight:700}
+.inv-count{background:var(--accent);color:#fff;font-size:9px;font-weight:700;padding:1px 8px;border-radius:10px;margin-left:4px}
+
+/* ====== КАРТОЧКИ ====== */
+.card{background:rgba(26,46,26,0.8);backdrop-filter:blur(4px);border-radius:14px;padding:12px;display:flex;align-items:center;gap:10px;border:1px solid rgba(255,255,255,0.05)}
+.card-emoji{font-size:26px;width:36px;text-align:center}
+.card-info{flex:1;min-width:0}
+.card-title{font-weight:600;font-size:13px}
+.card-desc{font-size:11px;color:var(--hint)}
+
+/* ====== МОДАЛКИ ====== */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:none;align-items:flex-end;justify-content:center;z-index:200;padding:12px}
 .modal-overlay.show{display:flex}
-.modal{background:var(--secondary);border-radius:18px 18px 0 0;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding:16px}
-.modal-title{font-size:16px;font-weight:700;margin-bottom:12px;text-align:center}
-.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--accent);color:#fff;padding:10px 16px;border-radius:30px;font-size:13px;font-weight:600;opacity:0;transition:all .3s;z-index:300;pointer-events:none;max-width:90%;text-align:center}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}.toast.error{background:var(--danger)}
-.empty{text-align:center;padding:30px 12px;color:var(--hint)}.empty-emoji{font-size:40px;margin-bottom:8px}
-.level-badge{background:var(--purple);color:#fff;font-size:11px;padding:3px 8px;border-radius:10px;font-weight:700}
-.inv-count{background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px}
-.customer-banner{background:linear-gradient(135deg,#6a1b9a,#4a148c);border-radius:14px;padding:12px;margin-bottom:12px;display:none}
+.modal{background:var(--secondary);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding:20px;border-top:1px solid rgba(76,175,80,0.2)}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:14px;text-align:center}
+
+/* ====== ТОСТ ====== */
+.toast {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: var(--accent);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0;
+  transition: all 0.3s;
+  z-index: 300;
+  pointer-events: none;
+  max-width: 90%;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.error{background:var(--danger)}
+
+/* ====== КЛИЕНТ ====== */
+.customer-banner {
+  background: linear-gradient(135deg, #1a237e, #283593);
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 14px;
+  display: none;
+  border: 1px solid rgba(255,255,255,0.1);
+}
 .customer-banner.show{display:block}
-.customer-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.customer-avatar{font-size:32px}.customer-name{font-weight:700;font-size:14px}
-.customer-want{font-size:11px;color:rgba(255,255,255,.8)}
-.customer-actions{display:flex;gap:6px;margin-top:8px}.customer-actions .btn{flex:1}
-.ref-card{background:linear-gradient(135deg,#1a237e,#283593);border-radius:14px;padding:14px;margin-bottom:12px;text-align:center}
-.section-title{font-size:12px;font-weight:600;color:var(--hint);margin:12px 0 6px;text-transform:uppercase}
-.boost-tag{display:inline-block;background:rgba(33,150,243,.25);color:#64b5f6;font-size:9px;padding:1px 5px;border-radius:5px;margin-left:3px}
-.boost-tag.fert{background:rgba(255,179,0,.25);color:#ffb300}.boost-tag.sick{background:rgba(229,57,53,.3);color:#ef5350}
-.room-info{background:var(--secondary);border-radius:12px;padding:12px;margin-bottom:12px;font-size:13px}
-.energy-cost{font-size:9px;color:var(--hint);background:rgba(0,0,0,0.3);padding:1px 6px;border-radius:8px;display:inline-block;margin-left:4px}
-.power-indicator{display:flex;align-items:center;gap:4px;font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,0.05);position:relative;z-index:2}
-.power-indicator .bar-fill{height:3px;border-radius:2px}
-.disease-warning{background:rgba(229,57,53,0.2);border-radius:6px;padding:4px 8px;margin:4px 0;font-size:11px;color:#ef5350;border:1px solid #e53935;position:relative;z-index:2;animation:blink 1s infinite}
+.customer-header{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.customer-avatar{font-size:34px}
+.customer-name{font-weight:700;font-size:15px}
+.customer-want{font-size:12px;color:rgba(255,255,255,0.75)}
+.customer-actions{display:flex;gap:6px;margin-top:8px}
+.customer-actions .btn{flex:1}
+
+/* ====== КОМНАТА ====== */
+.room-info{background:rgba(26,46,26,0.8);border-radius:14px;padding:14px;margin-bottom:12px;font-size:13px;border:1px solid rgba(255,255,255,0.05)}
+
+/* ====== РЕФЕРАЛКА ====== */
+.ref-card{background:linear-gradient(135deg,#1a237e,#283593);border-radius:16px;padding:16px;text-align:center}
+
+.section-title{font-size:11px;font-weight:600;color:var(--hint);margin:12px 0 6px;text-transform:uppercase;letter-spacing:0.5px}
+
+/* ====== АДАПТИВ ====== */
+@media (max-width: 400px) {
+  .farm-grid{grid-template-columns:1fr}
+  .stats{font-size:11px;gap:6px}
+  .stat{padding:2px 8px}
+  .plant-container{height:90px}
+  .plant-container svg{width:70px;height:90px}
+}
 </style>
 </head>
 <body>
+
+<!-- ====== ХЕДЕР ====== -->
 <div class="header">
-<div class="stats">
-<div class="stat">💰 <span id="money">0</span>$</div>
-<div class="stat">⚡ <span id="energy">100</span></div>
-<div class="stat">🏆 <span id="level">1</span></div>
-<div class="stat">⭐ <span id="rep">0</span></div>
+  <div class="stats">
+    <div class="stat">💰 <span id="money">0</span>$</div>
+    <div class="stat">⚡ <span id="energy">100</span></div>
+    <div class="stat">🏆 <span id="level">1</span></div>
+    <div class="stat">⭐ <span id="rep">0</span></div>
+  </div>
+  <div class="level-badge" id="xp-badge">0 XP</div>
 </div>
-<div class="level-badge" id="xp-badge">0 XP</div>
-</div>
+
+<!-- ====== ТАБЫ ====== -->
 <div class="tabs">
-<div class="tab active" data-tab="farm">🌿 Ферма</div>
-<div class="tab" data-tab="shop">🛒 Магазин</div>
-<div class="tab" data-tab="inventory">📦 Склад</div>
-<div class="tab" data-tab="room">🏠 Комната</div>
-<div class="tab" data-tab="process">⚗️ Цех</div>
-<div class="tab" data-tab="friends">👥 Друзья</div>
+  <div class="tab active" data-tab="farm">🌱 Ферма</div>
+  <div class="tab" data-tab="shop">🛒 Магазин</div>
+  <div class="tab" data-tab="inventory">📦 Склад</div>
+  <div class="tab" data-tab="room">🏠 Комната</div>
+  <div class="tab" data-tab="process">⚗️ Цех</div>
+  <div class="tab" data-tab="friends">👥 Друзья</div>
 </div>
+
+<!-- ====== КОНТЕНТ ====== -->
 <div class="content">
-<div class="section active" id="section-farm">
-<div class="customer-banner" id="customer-banner">
-<div class="customer-header"><div class="customer-avatar" id="cust-avatar">🧑</div><div><div class="customer-name" id="cust-name">Клиент</div><div class="customer-want" id="cust-want">Хочет купить...</div></div></div>
-<div class="customer-actions">
-<button class="btn btn-secondary btn-small" onclick="rejectCustomer()">Отказать</button>
-<button class="btn btn-purple btn-small" onclick="smokeWithCustomer()">🚬 Покурить</button>
-<button class="btn btn-small" onclick="dealWithCustomer()">💰 Продать</button>
-</div></div>
-<div class="farm-grid" id="farm-grid"></div>
-<div style="margin-top:12px;text-align:center"><button class="btn btn-secondary btn-full" id="btn-buy-pot" onclick="buyPot()">➕ Купить горшок</button></div>
+
+  <!-- ФЕРМА -->
+  <div class="section active" id="section-farm">
+    <div class="customer-banner" id="customer-banner">
+      <div class="customer-header">
+        <div class="customer-avatar" id="cust-avatar">🧑</div>
+        <div>
+          <div class="customer-name" id="cust-name">Клиент</div>
+          <div class="customer-want" id="cust-want">Хочет купить...</div>
+        </div>
+      </div>
+      <div class="customer-actions">
+        <button class="btn btn-secondary btn-small" onclick="rejectCustomer()">Отказать</button>
+        <button class="btn btn-purple btn-small" onclick="smokeWithCustomer()">🚬 Покурить</button>
+        <button class="btn btn-small" onclick="dealWithCustomer()">💰 Продать</button>
+      </div>
+    </div>
+    <div class="farm-grid" id="farm-grid"></div>
+    <div style="margin-top:12px;text-align:center">
+      <button class="btn btn-secondary btn-full" id="btn-buy-pot" onclick="buyPot()">➕ Купить горшок</button>
+    </div>
+  </div>
+
+  <!-- МАГАЗИН -->
+  <div class="section" id="section-shop">
+    <div class="card-list" id="shop-list"></div>
+  </div>
+
+  <!-- СКЛАД -->
+  <div class="section" id="section-inventory">
+    <div class="card-list" id="inventory-list"></div>
+    <div style="margin-top:14px">
+      <button class="btn btn-full" onclick="sellAll()" id="btn-sell-all">💰 Продать всё</button>
+    </div>
+  </div>
+
+  <!-- КОМНАТА -->
+  <div class="section" id="section-room">
+    <div class="room-info" id="room-info"></div>
+    <div id="daily-box"></div>
+    <div class="card-list" id="room-list"></div>
+  </div>
+
+  <!-- ЦЕХ -->
+  <div class="section" id="section-process">
+    <div class="section-title">Переработка сырья</div>
+    <div class="card-list" id="process-list"></div>
+    <div class="section-title" style="margin-top:14px">Готовая продукция</div>
+    <div class="card-list" id="products-list"></div>
+  </div>
+
+  <!-- ДРУЗЬЯ -->
+  <div class="section" id="section-friends">
+    <div class="ref-card">
+      <div style="font-weight:700;margin-bottom:6px">👥 Пригласи друзей</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.75);margin-bottom:10px">
+        За каждого: <b>+150$</b> и <b>+20⚡</b>
+      </div>
+      <div style="display:flex;justify-content:center;gap:16px;margin-bottom:10px;font-size:13px">
+        <div>Приглашено: <b id="ref-count">0</b></div>
+        <div>Бонус: <b id="ref-earned">0</b>$</div>
+      </div>
+      <button class="btn btn-full" onclick="shareReferral()">📤 Поделиться</button>
+      <button class="btn btn-secondary btn-full" style="margin-top:6px" onclick="copyReferral()">📋 Скопировать</button>
+    </div>
+  </div>
+
 </div>
-<div class="section" id="section-shop"><div class="card-list" id="shop-list"></div></div>
-<div class="section" id="section-inventory"><div class="card-list" id="inventory-list"></div><div style="margin-top:14px"><button class="btn btn-full" onclick="sellAll()" id="btn-sell-all">💰 Продать всё</button></div></div>
-<div class="section" id="section-room"><div class="room-info" id="room-info"></div><div id="daily-box"></div><div class="card-list" id="room-list"></div></div>
-<div class="section" id="section-process">
-<div class="section-title">Переработка сырья</div>
-<div class="card-list" id="process-list"></div>
-<div class="section-title" style="margin-top:14px">Готовая продукция</div>
-<div class="card-list" id="products-list"></div>
+
+<!-- ====== МОДАЛКИ ====== -->
+<div class="modal-overlay" id="modal-seed">
+  <div class="modal">
+    <div class="modal-title">Выбери семя</div>
+    <div class="card-list" id="seed-list"></div>
+    <button class="btn btn-secondary btn-full" style="margin-top:10px" onclick="closeModal('modal-seed')">Отмена</button>
+  </div>
 </div>
-<div class="section" id="section-friends">
-<div class="ref-card">
-<div style="font-weight:700;margin-bottom:6px">👥 Пригласи друзей</div>
-<div style="font-size:12px;color:rgba(255,255,255,.75);margin-bottom:10px">За каждого: <b>+150$</b> и <b>+20⚡</b></div>
-<div style="display:flex;justify-content:center;gap:16px;margin-bottom:10px;font-size:13px"><div>Приглашено: <b id="ref-count">0</b></div><div>Бонус: <b id="ref-earned">0</b>$</div></div>
-<button class="btn btn-full" onclick="shareReferral()">📤 Поделиться</button>
-<button class="btn btn-secondary btn-full" style="margin-top:6px" onclick="copyReferral()">📋 Скопировать</button>
-</div></div>
+
+<div class="modal-overlay" id="modal-fert">
+  <div class="modal">
+    <div class="modal-title">Удобрения / Лечение</div>
+    <div class="card-list" id="fert-list"></div>
+    <button class="btn btn-secondary btn-full" style="margin-top:10px" onclick="closeModal('modal-fert')">Отмена</button>
+  </div>
 </div>
-<div class="modal-overlay" id="modal-seed"><div class="modal"><div class="modal-title">Выбери семя</div><div class="card-list" id="seed-list"></div><button class="btn btn-secondary btn-full" style="margin-top:10px" onclick="closeModal('modal-seed')">Отмена</button></div></div>
-<div class="modal-overlay" id="modal-fert"><div class="modal"><div class="modal-title">Удобрения / Лечение</div><div class="card-list" id="fert-list"></div><button class="btn btn-secondary btn-full" style="margin-top:10px" onclick="closeModal('modal-fert')">Отмена</button></div></div>
+
 <div class="toast" id="toast"></div>
+
 <script>
-const tg=window.Telegram?.WebApp;
-let userId='guest_'+Math.random().toString(36).slice(2,9);
-let botUsername='Rastaboishan_bot';
-if(tg){tg.ready();tg.expand();try{tg.setHeaderColor('secondary_bg_color')}catch(e){}if(tg.initDataUnsafe?.user?.id)userId=String(tg.initDataUnsafe.user.id)}
-function haptic(t='light'){try{if(tg?.HapticFeedback){if(t==='success')tg.HapticFeedback.notificationOccurred('success');else if(t==='error')tg.HapticFeedback.notificationOccurred('error');else tg.HapticFeedback.impactOccurred(t)}}catch(e){}}
-const STRAINS=[{id:'skunk',name:'Skunk',emoji:'🌱',seedPrice:50,baseTime:90,yield:3,sellPrice:50,energyCost:5,unlock:1},{id:'haze',name:'Purple Haze',emoji:'💜',seedPrice:130,baseTime:140,yield:5,sellPrice:85,energyCost:8,unlock:2},{id:'widow',name:'White Widow',emoji:'⚪',seedPrice:280,baseTime:200,yield:7,sellPrice:140,energyCost:12,unlock:4},{id:'alien',name:'Alien Kush',emoji:'👽',seedPrice:550,baseTime:280,yield:12,sellPrice:220,energyCost:18,unlock:7},{id:'og',name:'OG Kush',emoji:'🔥',seedPrice:950,baseTime:360,yield:18,sellPrice:340,energyCost:25,unlock:10}];
-const LAMPS=[{id:'lamp1',name:'Лампа CFL',emoji:'💡',price:150,power:1.15,desc:'+15% скорость'},{id:'lamp2',name:'LED лампа',emoji:'✨',price:400,power:1.35,desc:'+35% скорость'},{id:'lamp3',name:'HPS 400W',emoji:'🔆',price:900,power:1.6,desc:'+60% скорость'},{id:'lamp4',name:'Квантовая',emoji:'💎',price:2000,power:2.0,desc:'+100% скорость'}];
-const LAMP_ENERGY_COST={lamp1:0.3,lamp2:0.6,lamp3:1.2,lamp4:1.8};
-const FERTS=[{id:'water_boost',name:'Супер-вода',emoji:'💧',price:40,effect:'speed',value:0.2,desc:'+20% скорость'},{id:'yield_boost',name:'Удобрение+',emoji:'🧪',price:90,effect:'yield',value:0.4,desc:'+40% урожай'},{id:'heal',name:'Лекарство',emoji:'💊',price:60,effect:'heal',value:1,desc:'Лечит болезнь'},{id:'mega',name:'Мега-буст',emoji:'🚀',price:350,effect:'both',value:0.35,desc:'+35% скорость и урожай'}];
-const ROOM_UPGRADES=[{id:'pots2',name:'Ещё горшок',emoji:'',price:400,type:'pot'},{id:'vent',name:'Вентиляция',emoji:'🌀',price:500,type:'vent',desc:'Болезни реже на 60%'},{id:'auto',name:'Автополив',emoji:'💦',price:1200,type:'auto',desc:'Вода убывает на 55% медленнее'}];
-const CUSTOMERS=[{name:'Вася',emoji:'🧑🦰',prefer:null,mult:1.1,smoke:15,rep:1},{name:'Марина',emoji:'👩',prefer:'haze',mult:1.35,smoke:20,rep:2},{name:'Колян',emoji:'🧔',prefer:'skunk',mult:1.2,smoke:12,rep:1},{name:'DJ Max',emoji:'🎧',prefer:'og',mult:1.55,smoke:25,rep:3},{name:'Аня',emoji:'👱♀️',prefer:'widow',mult:1.3,smoke:18,rep:2},{name:'Инопланетянин',emoji:'👽',prefer:'alien',mult:1.9,smoke:30,rep:4},{name:'Боб',emoji:'🧔♂️',prefer:null,mult:1.25,smoke:22,rep:2},{name:'Студент',emoji:'🎓',prefer:'skunk',mult:1.08,smoke:10,rep:1}];
-const STAGE_NAMES=['','Семя','Росток','Вегетация','Цветение','Готово'];
-const STAGE_EMOJI=['','🌱','🌿','🌳','🌸','✨'];
-const PRODUCTS={dried:{name:'Сушка',emoji:'🍂',mult:1.4,energy:3,from:'raw'},joint:{name:'Косяк',emoji:'🚬',mult:1.9,energy:5,from:'dried',need:1},oil:{name:'Масло',emoji:'🧴',mult:2.4,energy:8,from:'dried',need:2},edible:{name:'Еда',emoji:'🍪',mult:2.8,energy:10,from:'dried',need:2}};
-let state={money:250,energy:100,maxEnergy:100,level:1,xp:0,rep:0,pots:[{id:1,strain:null,plantedAt:null,water:100,health:100,stage:0,disease:false,lamp:null,fert:null,speedMult:1,yieldMult:1,lastTick:Date.now(),_lastWarning:null}],inventory:{},lamps:{},ferts:{},room:{vent:false,auto:false},referrals:0,referralEarned:0,referredBy:null,lastCustomerAt:0,currentCustomer:null,lastUpdate:Date.now(),daily:null};
-let selectedPotId=null;
-function save(){state.lastUpdate=Date.now();localStorage.setItem('budfarm_v3_'+userId,JSON.stringify(state))}
-function load(){const raw=localStorage.getItem('budfarm_v3_'+userId);if(raw){try{const l=JSON.parse(raw);state={...state,...l}}catch(e){}}handleReferral()}
-function showToast(m,err=false){const t=document.getElementById('toast');t.textContent=m;t.className='toast show'+(err?' error':'');setTimeout(()=>t.classList.remove('show'),2400)}
-function formatTime(s){if(s<=0)return'Готово!';const m=Math.floor(s/60),sec=Math.floor(s%60);return m>0?`${m}м ${sec}с`:`${sec}с`}
-function getStrain(id){return STRAINS.find(s=>s.id===id)}
-function getLamp(id){return LAMPS.find(l=>l.id===id)}
-function getFert(id){return FERTS.find(f=>f.id===id)}
-function xpFor(l){return l*120}
-function addXp(a){state.xp+=a;let up=false;while(state.xp>=xpFor(state.level)){state.xp-=xpFor(state.level);state.level++;state.maxEnergy=100+(state.level-1)*12;state.energy=state.maxEnergy;up=true}if(up){showToast('🎉 Уровень '+state.level+'!');haptic('success')}save();render()}
-function getToday(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
-function initDaily(){const today=getToday();if(!state.daily||state.daily.date!==today){state.daily={date:today,quests:[{id:'harvest',name:'🌿 Собери 5 урожаев',target:5,progress:0,reward:120,done:false},{id:'sell',name:'💰 Продай товар на 300$',target:300,progress:0,reward:100,done:false},{id:'water',name:'💧 Полей 8 раз',target:8,progress:0,reward:80,done:false}],claimed:false};save()}}
-function addQuestProgress(type,amount){initDaily();if(state.daily.claimed)return;state.daily.quests.forEach(q=>{if(q.done)return;if(q.id===type){const old=q.progress;q.progress=Math.min(q.target,q.progress+amount);if(q.progress>=q.target&&old<q.target){q.done=true;showToast('✅ Задание выполнено: '+q.name);haptic('success')}}});save();renderDaily()}
-function claimDaily(){initDaily();const allDone=state.daily.quests.every(q=>q.done);if(!allDone){showToast('Сначала выполни все задания!',true);return}if(state.daily.claimed){showToast('💰 Награда уже получена сегодня!',true);return}let total=0;state.daily.quests.forEach(q=>{if(q.done)total+=q.reward});const bonus=50;state.money+=total+bonus;state.daily.claimed=true;showToast('🎉 Задания выполнены! +'+(total+bonus)+'$ ('+total+'$ + '+bonus+'$ бонус)');haptic('success');addXp(20);save();render();renderDaily()}
-function renderDaily(){initDaily();const el=document.getElementById('daily-box');if(!el)return;let html='<div class="section-title">📅 Ежедневные задания</div>';if(state.daily.claimed){html+='<div style="text-align:center;padding:16px;background:rgba(76,175,80,0.15);border-radius:12px;margin-bottom:8px;"><div style="font-size:24px;">🎁</div><div style="font-weight:600;color:#4caf50;">Награда получена!</div><div style="font-size:12px;color:var(--hint);">Возвращайся завтра</div></div>';el.innerHTML=html;return}let allDone=true;state.daily.quests.forEach(q=>{const pct=Math.min(100,Math.floor(q.progress/q.target*100));const done=q.done;if(!done)allDone=false;html+=`<div class="card" style="margin-bottom:6px;border-left:3px solid ${done?'#4caf50':'#ffb300'};"><div class="card-emoji">${done?'✅':'⬜'}</div><div class="card-info"><div class="card-title">${q.name}</div><div class="card-desc">${q.progress}/${q.target} · Награда: ${q.reward}$</div><div class="bar" style="margin-top:4px;"><div class="bar-fill light" style="width:${pct}%;${done?'background:#4caf50;':''}"></div></div></div><div style="font-size:12px;font-weight:700;color:${done?'#4caf50':'var(--hint)'};">${done?'✅':pct+'%'}</div></div>`});if(allDone&&!state.daily.claimed){html+=`<button class="btn btn-full" onclick="claimDaily()" style="background:linear-gradient(135deg,#ff6f00,#ff8f00);font-size:16px;padding:14px;">🎁 Забрать награду (${state.daily.quests.reduce((s,q)=>s+q.reward,0)+50}$)</button>`}else if(!allDone){html+='<div style="text-align:center;font-size:12px;color:var(--hint);padding:8px;">Выполни все задания</div>'}el.innerHTML=html}
-function getEffectiveTime(pot){const s=getStrain(pot.strain);if(!s)return 9999;let mult=(pot.speedMult||1);if(pot.lamp&&state.energy>2){const l=getLamp(pot.lamp);if(l){const energyFactor=Math.min(1,state.energy/20);mult*=(1+(l.power-1)*energyFactor)}}if(state.room.vent)mult*=1.05;return s.baseTime/mult}
-function getProgress(pot){if(!pot.strain||!pot.plantedAt)return 0;const t=getEffectiveTime(pot);return Math.min(1,(Date.now()-pot.plantedAt)/1000/t)}
-function updatePotStage(pot){const p=getProgress(pot);if(p>=1)pot.stage=5;else if(p>=0.75)pot.stage=4;else if(p>=0.45)pot.stage=3;else if(p>=0.2)pot.stage=2;else pot.stage=1}
-function calculateLampEnergyCost(pot){if(!pot.lamp)return 0;return LAMP_ENERGY_COST[pot.lamp]||0}
-function tickPots(){const now=Date.now();state.pots.forEach(pot=>{if(!pot.strain)return;const dt=(now-(pot.lastTick||now))/1000;pot.lastTick=now;let waterDrain=0.35;if(state.room.auto){waterDrain*=0.45;if(pot.water<60)pot.water=Math.min(100,pot.water+0.1*dt)}pot.water=Math.max(0,pot.water-waterDrain*dt);const lampCost=calculateLampEnergyCost(pot);if(lampCost>0&&pot.stage>0&&pot.stage<5){const energyUsed=lampCost*dt*0.5;state.energy=Math.max(0,state.energy-energyUsed)}let healthRegen=0.15;let diseaseChance=0.008;if(state.room.vent){diseaseChance*=0.4;healthRegen*=1.3}if(pot.water<20){pot.health=Math.max(0,pot.health-0.5*dt)}else if(pot.water>40){pot.health=Math.min(100,pot.health+healthRegen*dt)}if(!pot.disease&&pot.health<35&&Math.random()<diseaseChance){pot.disease=true;showToast('🦠 Вредители атаковали растение #'+pot.id+'! Срочно лечи!',true);haptic('error');try{if(tg?.showAlert){tg.showAlert('⚠️ ВНИМАНИЕ! На растении обнаружены вредители! Используй лекарство в разделе "Удобрения".')}}catch(e){}}if(pot.disease){pot.health=Math.max(0,pot.health-0.4*dt);if(!pot._lastWarning||now-pot._lastWarning>10000){pot._lastWarning=now;showToast('⚠️ Растение #'+pot.id+' болеет! Нужно лекарство!',true);haptic('warning')}}else{pot._lastWarning=null}if(pot.health<=0){showToast('💀 Растение #'+pot.id+' погибло!',true);haptic('error');if(pot.strain){const s=getStrain(pot.strain);if(s){const refund=Math.floor(s.seedPrice*0.3);state.money+=refund;showToast('💰 Возврат '+refund+'$ за семена',false)}}pot.strain=null;pot.plantedAt=null;pot.stage=0;pot.disease=false;pot.water=100;pot.health=100;pot.lamp=null;pot.fert=null;pot.speedMult=1;pot.yieldMult=1;pot._lastWarning=null}updatePotStage(pot)})}
-function getQuality(pot){let q=1.0;if(pot.health>=90)q+=0.25;else if(pot.health>=70)q+=0.1;else if(pot.health<40)q-=0.3;if(pot.lamp&&state.energy>5){const l=getLamp(pot.lamp);if(l){const energyFactor=Math.min(1,state.energy/30);q+=(l.power-1)*0.4*energyFactor}}if(pot.fert)q+=0.15;if(pot.disease)q-=0.4;if(q<0.5)q=0.5;if(q>2.0)q=2.0;return q}
-function qualityName(q){if(q>=1.6)return{name:'Отличное',emoji:'💎',color:'#00e676'};if(q>=1.25)return{name:'Хорошее',emoji:'⭐',color:'#ffeb3b'};if(q>=0.9)return{name:'Обычное',emoji:'🌿',color:'#81c784'};return{name:'Слабое',emoji:'🥀',color:'#ef9a9a'}}
-function applyLampToPot(potId,lampId){const pot=state.pots.find(p=>p.id===potId);if(!pot||!pot.strain){showToast('Сначала посади растение',true);return}const lamp=getLamp(lampId);if(!lamp)return;if((state.lamps[lampId]||0)<=0){showToast('Нет такой лампы',true);return}if(pot.lamp){state.lamps[pot.lamp]=(state.lamps[pot.lamp]||0)+1}state.lamps[lampId]--;pot.lamp=lampId;pot.speedMult=1;showToast('💡 '+lamp.name+' установлена!');haptic('success');save();render()}
-function openLampModal(potId){selectedPotId=potId;const list=document.getElementById('seed-list');list.innerHTML='';let hasLamps=false;LAMPS.forEach(l=>{const count=state.lamps[l.id]||0;if(count<=0)return;hasLamps=true;const c=document.createElement('div');c.className='card';c.innerHTML=`<div class="card-emoji">${l.emoji}</div><div class="card-info"><div class="card-title">${l.name} <span class="inv-count">×${count}</span></div><div class="card-desc">${l.desc} (бонус ${Math.round((l.power-1)*100)}%) · ⚡${LAMP_ENERGY_COST[l.id].toFixed(1)}/с</div></div><button class="btn btn-small btn-purple" onclick="applyLampToPot(${potId},'${l.id}')">Установить</button>`;list.appendChild(c)});if(!hasLamps){list.innerHTML='<div class="empty"><div class="empty-emoji">💡</div>Нет ламп в инвентаре.<br>Купите в магазине!</div>'}document.getElementById('modal-seed').classList.add('show');document.querySelector('#modal-seed .modal-title').textContent='Выбери лампу'}
-function waterPot(id){const pot=state.pots.find(p=>p.id===id);if(!pot||!pot.strain)return;if(state.energy<2){showToast('Нужно 2⚡',true);return}state.energy-=2;pot.water=Math.min(100,pot.water+45);showToast('💧 Полито');haptic('medium');addXp(1);addQuestProgress('water',1);save();render()}
-function openSeedModal(id){selectedPotId=id;const list=document.getElementById('seed-list');list.innerHTML='';STRAINS.forEach(s=>{const ok=state.level>=s.unlock;const can=state.money>=s.seedPrice&&state.energy>=s.energyCost;const c=document.createElement('div');c.className='card';c.style.opacity=ok?'1':'0.45';c.innerHTML=`<div class="card-emoji">${s.emoji}</div><div class="card-info"><div class="card-title">${s.name} ${!ok?'🔒':''}</div><div class="card-desc">⏱ ~${Math.floor(s.baseTime/60)}м · ${s.yield} шт · ${s.sellPrice}$</div></div><div style="text-align:right"><div class="card-price">${s.seedPrice}$</div><div style="font-size:10px;color:var(--hint)">⚡${s.energyCost}</div></div>`;if(ok&&can){c.style.cursor='pointer';c.onclick=()=>plantSeed(s.id)}list.appendChild(c)});document.getElementById('modal-seed').classList.add('show');document.querySelector('#modal-seed .modal-title').textContent='Выбери семя'}
-function plantSeed(sid){const s=getStrain(sid);if(!s)return;if(state.money<s.seedPrice||state.energy<s.energyCost){showToast('Не хватает ресурсов',true);return}const pot=state.pots.find(p=>p.id===selectedPotId);if(!pot||pot.strain)return;state.money-=s.seedPrice;state.energy-=s.energyCost;pot.strain=sid;pot.plantedAt=Date.now();pot.water=80;pot.health=100;pot.stage=1;pot.disease=false;pot.speedMult=1;pot.yieldMult=1;pot.lastTick=Date.now();closeModal('modal-seed');showToast('Посажено: '+s.name);haptic('medium');addXp(5);save();render()}
-function harvest(id){const pot=state.pots.find(p=>p.id===id);if(!pot||!pot.strain||getProgress(pot)<1)return;if(pot.health<25){showToast('Растение слишком слабое',true);return}const s=getStrain(pot.strain);const q=getQuality(pot);const qInfo=qualityName(q);let amount=Math.floor(s.yield*(pot.yieldMult||1)*(pot.health/100)*(q>=1.25?1.1:1));if(amount<1)amount=1;const key=pot.strain+'_q'+Math.round(q*100);state.inventory[key]=(state.inventory[key]||0)+amount;state.inventory[pot.strain]=(state.inventory[pot.strain]||0)+amount;showToast(`${qInfo.emoji} ${qInfo.name}! ${amount}× ${s.name}`);haptic('success');addXp(amount*4+Math.floor(q*5));addQuestProgress('harvest',1);pot.strain=null;pot.plantedAt=null;pot.stage=0;pot.disease=false;pot.water=100;pot.health=100;pot.fert=null;pot.lamp=null;pot.speedMult=1;pot.yieldMult=1;save();render()}
-function openFertModal(id){selectedPotId=id;const list=document.getElementById('fert-list');list.innerHTML='';let any=false;FERTS.forEach(f=>{const cnt=state.ferts[f.id]||0;if(cnt<=0)return;any=true;const c=document.createElement('div');c.className='card';c.innerHTML=`<div class="card-emoji">${f.emoji}</div><div class="card-info"><div class="card-title">${f.name} <span class="inv-count">×${cnt}</span></div><div class="card-desc">${f.desc}</div></div><button class="btn btn-small btn-warning" onclick="applyFert('${f.id}')">Применить</button>`;list.appendChild(c)});if(!any)list.innerHTML='<div class="empty"><div class="empty-emoji">🧪</div>Нет предметов</div>';document.getElementById('modal-fert').classList.add('show')}
-function applyFert(fid){const pot=state.pots.find(p=>p.id===selectedPotId);if(!pot||!pot.strain)return;if((state.ferts[fid]||0)<=0)return;const f=getFert(fid);state.ferts[fid]--;if(f.effect==='heal'){pot.disease=false;pot.health=Math.min(100,pot.health+40);showToast('💊 Вылечено!');pot._lastWarning=null}else{if(f.effect==='speed'||f.effect==='both')pot.speedMult=(pot.speedMult||1)*(1+f.value);if(f.effect==='yield'||f.effect==='both')pot.yieldMult=(pot.yieldMult||1)*(1+f.value);pot.fert=fid;showToast(f.emoji+' '+f.name+' применено')}closeModal('modal-fert');haptic('success');addXp(3);save();render()}
-function buyLamp(lid){const l=getLamp(lid);if(state.money<l.price){showToast('Мало денег',true);return}state.money-=l.price;state.lamps[lid]=(state.lamps[lid]||0)+1;showToast('Куплена: '+l.name);haptic('medium');save();render()}
-function buyFert(fid){const f=getFert(fid);if(state.money<f.price){showToast('Мало денег',true);return}state.money-=f.price;state.ferts[fid]=(state.ferts[fid]||0)+1;showToast('Куплено: '+f.name);save();render()}
-function buyEnergy(){if(state.money<80){showToast('Мало денег',true);return}state.money-=80;state.energy=Math.min(state.maxEnergy,state.energy+50);showToast('+50⚡');save();render()}
-function buyPot(){const price=350+state.pots.length*250;if(state.money<price){showToast('Мало денег',true);return}state.money-=price;state.pots.push({id:Date.now(),strain:null,plantedAt:null,water:100,health:100,stage:0,disease:false,lamp:null,fert:null,speedMult:1,yieldMult:1,lastTick:Date.now(),_lastWarning:null});showToast('Новый горшок!');haptic('success');addXp(8);save();render()}
-function buyRoomUpgrade(uid){const u=ROOM_UPGRADES.find(x=>x.id===uid);if(!u||state.money<u.price){showToast('Мало денег',true);return}if(u.type==='pot'){buyPot();return}if(u.type==='vent'&&state.room.vent){showToast('Уже куплено');return}if(u.type==='auto'&&state.room.auto){showToast('Уже куплено');return}state.money-=u.price;if(u.type==='vent')state.room.vent=true;if(u.type==='auto')state.room.auto=true;showToast('Куплено: '+u.name);haptic('success');addXp(15);save();render()}
-function sellItem(id){const amt=state.inventory[id]||0;if(amt<=0)return;const s=getStrain(id);const total=amt*s.sellPrice;state.money+=total;delete state.inventory[id];showToast('Продано за '+total+'$');haptic('success');addXp(Math.floor(total/12));addQuestProgress('sell',total);save();render()}
-function sellAll(){let total=0,items=0;for(const[id,amt]of Object.entries(state.inventory)){if(amt<=0)continue;const info=getProductInfo(id);if(info){total+=amt*info.sellPrice;items+=amt}}if(!items){showToast('Склад пуст',true);return}state.money+=total;state.inventory={};showToast('Продано за '+total+'$');haptic('success');addXp(Math.floor(total/12));addQuestProgress('sell',total);save();render()}
-function getProductInfo(key){if(key.endsWith('_dried')){const sid=key.replace('_dried','');const s=getStrain(sid);return s?{name:s.name+' (сушка)',emoji:'🍂',sellPrice:Math.floor(s.sellPrice*1.4),strain:sid,type:'dried'}:null}if(key.endsWith('_joint')){const sid=key.replace('_joint','');const s=getStrain(sid);return s?{name:s.name+' косяк',emoji:'🚬',sellPrice:Math.floor(s.sellPrice*1.9),strain:sid,type:'joint'}:null}if(key.endsWith('_oil')){const sid=key.replace('_oil','');const s=getStrain(sid);return s?{name:s.name+' масло',emoji:'🧴',sellPrice:Math.floor(s.sellPrice*2.4),strain:sid,type:'oil'}:null}if(key.endsWith('_edible')){const sid=key.replace('_edible','');const s=getStrain(sid);return s?{name:s.name+' еда',emoji:'🍪',sellPrice:Math.floor(s.sellPrice*2.8),strain:sid,type:'edible'}:null}const s=getStrain(key);return s?{name:s.name+' (сырец)',emoji:s.emoji,sellPrice:s.sellPrice,strain:key,type:'raw'}:null}
-function processItem(strainId,productType){const p=PRODUCTS[productType];if(!p)return;const rawKey=strainId;const driedKey=strainId+'_dried';const outKey=strainId+'_'+productType;if(productType==='dried'){if((state.inventory[rawKey]||0)<1){showToast('Нет сырья',true);return}if(state.energy<p.energy){showToast('Мало энергии',true);return}state.inventory[rawKey]--;if(state.inventory[rawKey]<=0)delete state.inventory[rawKey];state.energy-=p.energy;state.inventory[driedKey]=(state.inventory[driedKey]||0)+1;showToast('🍂 Высушено!')}else{const need=p.need||1;if((state.inventory[driedKey]||0)<need){showToast('Нужна сушка ×'+need,true);return}if(state.energy<p.energy){showToast('Мало энергии',true);return}state.inventory[driedKey]-=need;if(state.inventory[driedKey]<=0)delete state.inventory[driedKey];state.energy-=p.energy;state.inventory[outKey]=(state.inventory[outKey]||0)+1;showToast(p.emoji+' '+p.name+' готов!')}haptic('success');addXp(4);save();render()}
-function sellProduct(key){const amt=state.inventory[key]||0;if(amt<=0)return;const info=getProductInfo(key);if(!info)return;const total=amt*info.sellPrice;state.money+=total;delete state.inventory[key];showToast('Продано за '+total+'$');haptic('success');addXp(Math.floor(total/10));addQuestProgress('sell',total);save();render()}
-function renderProcess(){const list=document.getElementById('process-list');list.innerHTML='';const raws=Object.entries(state.inventory).filter(([k,v])=>v>0&&getStrain(k));if(!raws.length){list.innerHTML='<div class="empty"><div class="empty-emoji">⚗️</div>Нет сырья для переработки.<br>Сначала собери урожай!</div>'}else{raws.forEach(([id,amt])=>{const s=getStrain(id);const c=document.createElement('div');c.className='card';c.innerHTML=`<div class="card-emoji">${s.emoji}</div><div class="card-info"><div class="card-title">${s.name} <span class="inv-count">×${amt}</span></div><div class="card-desc">Сырец</div></div><button class="btn btn-small btn-warning" onclick="processItem('${id}','dried')">🍂 Сушить</button>`;list.appendChild(c)})}const dried=Object.entries(state.inventory).filter(([k,v])=>v>0&&k.endsWith('_dried'));dried.forEach(([key,amt])=>{const info=getProductInfo(key);if(!info)return;const sid=info.strain;const c=document.createElement('div');c.className='card';c.innerHTML=`<div class="card-emoji">🍂</div><div class="card-info"><div class="card-title">${info.name} <span class="inv-count">×${amt}</span></div><div class="card-desc">Можно переработать</div></div><div style="display:flex;flex-direction:column;gap:4px"><button class="btn btn-small" onclick="processItem('${sid}','joint')">🚬 Косяк</button><button class="btn btn-small" onclick="processItem('${sid}','oil')">🧴 Масло</button><button class="btn btn-small" onclick="processItem('${sid}','edible')">🍪 Еда</button></div>`;list.appendChild(c)});const plist=document.getElementById('products-list');plist.innerHTML='';const products=Object.entries(state.inventory).filter(([k,v])=>v>0&&(k.includes('_joint')||k.includes('_oil')||k.includes('_edible')||k.includes('_dried')));if(!products.length){plist.innerHTML='<div class="empty" style="padding:16px">Пока нет готовой продукции</div>'}else{products.forEach(([key,amt])=>{const info=getProductInfo(key);if(!info)return;const c=document.createElement('div');c.className='card';c.innerHTML=`<div class="card-emoji">${info.emoji}</div><div class="card-info"><div class="card-title">${info.name} <span class="inv-count">×${amt}</span></div><div class="card-desc">${info.sellPrice}$ · Итого ${amt*info.sellPrice}$</div></div><button class="btn btn-small" onclick="sellProduct('${key}')">Продать</button>`;plist.appendChild(c)})}}
-function renderFarm(){const grid=document.getElementById('farm-grid');grid.innerHTML='';state.pots.forEach(pot=>{const div=document.createElement('div');div.className='pot';if(pot.lamp&&pot.strain){div.classList.add('pot-with-lamp');const glow=document.createElement('div');const lamp=getLamp(pot.lamp);let glowClass='pot-glow';if(lamp){switch(pot.lamp){case'lamp1':glowClass+=' glow-cfl';break;case'lamp2':glowClass+=' glow-led';break;case'lamp3':glowClass+=' glow-hps';break;case'lamp4':glowClass+=' glow-quantum';break}if(state.energy>5){glowClass+=' active pulsing'}}glow.className=glowClass;div.appendChild(glow);const beam=document.createElement('div');beam.className='light-beam'+(state.energy>5?' active':'');div.appendChild(beam)}if(pot.disease&&pot.strain){div.style.borderColor='#e53935'}let roomIndicators='';if(state.room.auto&&pot.strain){roomIndicators+=`<span class="boost-tag" style="background:rgba(33,150,243,0.3);color:#42a5f5;">💧 Автополив</span>`}if(state.room.vent&&pot.strain){roomIndicators+=`<span class="boost-tag" style="background:rgba(76,175,80,0.3);color:#66bb6a;">🌀 Вентиляция</span>`}if(!pot.strain){div.innerHTML+=`<div class="pot-emoji"></div><div class="pot-name">Пустой ${roomIndicators}</div><div class="pot-status">Готов к посадке</div><button class="btn btn-full" onclick="openSeedModal(${pot.id})">Посадить</button>`}else{const s=getStrain(pot.strain);const prog=getProgress(pot);const left=Math.max(0,Math.ceil(getEffectiveTime(pot)-(Date.now()-pot.plantedAt)/1000));updatePotStage(pot);const ready=prog>=1;if(ready)div.classList.add('ready');else if(pot.water<25)div.classList.add('needs-water');if(pot.disease)div.classList.add('sick');let tags='';if(pot.disease){tags+=`<span class="boost-tag sick" style="animation:blink 0.8s infinite;">🦠 ВРЕДИТЕЛИ!</span>`}if(pot.lamp){const l=getLamp(pot.lamp);if(l){const cost=LAMP_ENERGY_COST[pot.lamp]||0;const isActive=state.energy>2;tags+=`<span class="boost-tag" style="${isActive?'background:rgba(76,175,80,0.3);color:#4caf50':'background:rgba(255,0,0,0.3);color:#ef5350'}">💡${l.emoji} ${isActive?'✅':'⛔'} <span class="energy-cost">⚡${cost.toFixed(1)}/с</span></span>`}}if(pot.fert)tags+='<span class="boost-tag fert">🧪</span>';tags+=roomIndicators;let energyIndicator='';if(pot.lamp){const cost=LAMP_ENERGY_COST[pot.lamp]||0;const hasEnergy=state.energy>2;energyIndicator=`<div class="power-indicator" style="${hasEnergy?'border-color:#4caf50':'border-color:#e53935'}">⚡ ${hasEnergy?'Работает':'Нет энергии'} <span style="font-size:8px;color:var(--hint)">(${cost.toFixed(1)}/с)</span></div>`}let diseaseWarning='';if(pot.disease){diseaseWarning='<div class="disease-warning">🚨 ВНИМАНИЕ! Вредители атакуют! Используй 🧪 Лекарство!</div>'}let actions='';if(ready){actions=`<button class="btn btn-full" onclick="harvest(${pot.id})">🌿 Собрать</button>`}else{actions=`<div class="pot-actions"><button class="btn btn-blue btn-small" onclick="waterPot(${pot.id})">💧</button><button class="btn btn-warning btn-small" onclick="openFertModal(${pot.id})">🧪</button><button class="btn btn-small" onclick="openLampModal(${pot.id})" style="background:#9c27b0;color:#fff">💡</button></div>`}div.innerHTML+=`<div class="pot-emoji">${STAGE_EMOJI[pot.stage]||'🌱'}</div><div class="pot-name">${s.name}${tags}</div><div class="pot-status">${ready?'Готово!':STAGE_NAMES[pot.stage]+' · '+formatTime(left)}</div>${diseaseWarning}${energyIndicator}<div class="bars"><div class="bar-row"><span>💧</span><div class="bar"><div class="bar-fill water" style="width:${pot.water}%"></div></div></div><div class="bar-row"><span>❤️</span><div class="bar"><div class="bar-fill health" style="width:${pot.health}%"></div></div></div><div class="bar-row"><span>⏱</span><div class="bar"><div class="bar-fill light" style="width:${prog*100}%"></div></div></div></div>${actions}`}grid.appendChild(div)});document.getElementById('btn-buy-pot').textContent='➕ Горшок ('+(350+state.pots.length*250)+'$)'}
-function renderShop(){const list=document.getElementById('shop-list');list.innerHTML=`<div class="card"><div class="card-emoji">⚡</div><div class="card-info"><div class="card-title">Энергетик</div><div class="card-desc">+50 энергии</div></div><button class="btn btn-small" onclick="buyEnergy()">80$</button></div><div class="section-title">Лампы (потребляют энергию)</div>`;LAMPS.forEach(l=>{const owned=state.lamps[l.id]||0;const cost=LAMP_ENERGY_COST[l.id]||0;const c=document.createElement('div');c.className='card';c.innerHTML=`<div class="card-emoji">${l.emoji}</div><div class="card-info"><div class="card-title">${l.name} ${owned?`<span class="inv-count">×${owned}</span>`:''}</div><div class="card-desc">${l.desc} · ⚡${cost.toFixed(1)}/с</div></div><button class="btn btn-small btn-warning" onclick="buyLamp('${l.id}')">${l.price}$</button>`;list.appendChild(c)});list.innerHTML+=`<div class="section-title">Удобрения</div>`;FERTS.forEach(f=>{const owned=state.ferts[f.id]||0;const c=document.createElement('div');c.className='card';c.innerHTML=`<div class="card-emoji">${f.emoji}</div><div class="card-info"><div class="card-title">${f.name} ${owned?`<span class="inv-count">×${owned}</span>`:''}</div><div class="card-desc">${f.desc}</div></div><button class="btn btn-small" onclick="buyFert('${f.id}')">${f.price}$</button>`;list.appendChild(c)})}
-function renderInventory(){const list=document.getElementById('inventory-list');const entries=Object.entries(state.inventory).filter(([_,a])=>a>0);if(!entries.length){list.innerHTML='<div class="empty"><div class="empty-emoji">📦</div>Склад пуст</div>';document.getElementById('btn-sell-all').style.display='none';return}document.getElementById('btn-sell-all').style.display='block';list.innerHTML='';entries.forEach(([id,amt])=>{const info=getProductInfo(id);if(!info)return;const c=document.createElement('div');c.className='card';c.innerHTML=`<div class="card-emoji">${info.emoji}</div><div class="card-info"><div class="card-title">${info.name} <span class="inv-count">×${amt}</span></div><div class="card-desc">${info.sellPrice}$ · Итого ${amt*info.sellPrice}$</div></div><button class="btn btn-small" onclick="sellProduct('${id}')">Продать</button>`;list.appendChild(c)})}
-function renderRoom(){const info=document.getElementById('room-info');if(info){info.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div style="background:var(--bg);padding:10px;border-radius:10px;text-align:center;"><div style="font-size:20px;">🪴</div><div style="font-size:12px;">Горшков: <b>${state.pots.length}</b></div></div><div style="background:var(--bg);padding:10px;border-radius:10px;text-align:center;"><div style="font-size:20px;">${state.room.vent?'✅':'❌'}</div><div style="font-size:12px;">Вентиляция: <b>${state.room.vent?'Включена':'Отключена'}</b></div><div style="font-size:10px;color:var(--hint);">${state.room.vent?'🛡️ Болезни реже на 60%':'Нужно купить'}</div></div><div style="background:var(--bg);padding:10px;border-radius:10px;text-align:center;grid-column:span 2;"><div style="font-size:20px;">${state.room.auto?'✅':'❌'}</div><div style="font-size:12px;">Автополив: <b>${state.room.auto?'Включен':'Отключен'}</b></div><div style="font-size:10px;color:var(--hint);">${state.room.auto?'💧 Вода расходуется на 55% медленнее':'Нужно купить'}</div></div></div>`}const list=document.getElementById('room-list');if(!list)return;list.innerHTML='';ROOM_UPGRADES.forEach(u=>{let bought=false;if(u.type==='vent'&&state.room.vent)bought=true;if(u.type==='auto'&&state.room.auto)bought=true;const c=document.createElement('div');c.className='card';c.style.opacity=bought?'0.5':'1';c.innerHTML=`<div class="card-emoji">${u.emoji}</div><div class="card-info"><div class="card-title">${u.name}</div><div class="card-desc">${u.desc||''}</div></div>${bought?'<span style="color:var(--hint)">✅ Активно</span>':`<button class="btn btn-small" onclick="buyRoomUpgrade('${u.id}')">${u.price}$</button>`}`;list.appendChild(c)})}
-function renderFriends(){document.getElementById('ref-count').textContent=state.referrals;document.getElementById('ref-earned').textContent=state.referralEarned}
-function renderHeader(){document.getElementById('money').textContent=Math.floor(state.money);document.getElementById('energy').textContent=Math.floor(state.energy);document.getElementById('level').textContent=state.level;document.getElementById('rep').textContent=state.rep;document.getElementById('xp-badge').textContent=`${state.xp}/${xpFor(state.level)} XP`}
-function render(){renderHeader();renderFarm();renderShop();renderInventory();renderRoom();renderProcess();renderFriends();renderDaily()}
-function spawnCustomer(){if(state.currentCustomer||Date.now()-state.lastCustomerAt<50000)return;const has=Object.values(state.inventory).some(v=>v>0);if(!has)return;const cust=CUSTOMERS[Math.floor(Math.random()*CUSTOMERS.length)];let want=cust.prefer;if(!want||!(state.inventory[want]>0)){const av=Object.keys(state.inventory).filter(k=>state.inventory[k]>0);if(!av.length)return;want=av[Math.floor(Math.random()*av.length)]}const amount=Math.min(state.inventory[want],1+Math.floor(Math.random()*3));const s=getStrain(want);const price=Math.floor(s.sellPrice*amount*cust.mult*(1+state.rep*0.01));state.currentCustomer={...cust,wantId:want,amount,price,smoked:false,expiresAt:Date.now()+40000};state.lastCustomerAt=Date.now();const c=state.currentCustomer;if(!c)return;const s2=getStrain(c.wantId);document.getElementById('cust-avatar').textContent=c.emoji;document.getElementById('cust-name').textContent=c.name;document.getElementById('cust-want').textContent=`Хочет ${c.amount}× ${s2.name} за ${c.price}$`;const btn=document.querySelector('#customer-banner .btn-purple');if(btn)btn.style.display=c.smoked?'none':'';document.getElementById('customer-banner').classList.add('show')}
-function hideCustomerBanner(){document.getElementById('customer-banner').classList.remove('show');state.currentCustomer=null;save()}
-function dealWithCustomer(){const c=state.currentCustomer;if(!c)return;if((state.inventory[c.wantId]||0)<c.amount){showToast('Мало товара',true);return}state.inventory[c.wantId]-=c.amount;if(state.inventory[c.wantId]<=0)delete state.inventory[c.wantId];state.money+=c.price;state.rep+=c.rep||1;showToast(`Сделка! +${c.price}$ · +${c.rep||1}⭐`);haptic('success');addXp(Math.floor(c.price/8));hideCustomerBanner();render()}
-function smokeWithCustomer(){const c=state.currentCustomer;if(!c||c.smoked)return;const hasAny=Object.values(state.inventory).some(v=>v>0);if(!hasAny){showToast('Нечего курить — склад пуст',true);haptic('error');return}let consumed=false;for(const[key,amt]of Object.entries(state.inventory)){if(amt>0){state.inventory[key]--;if(state.inventory[key]<=0)delete state.inventory[key];consumed=true;break}}if(!consumed){showToast('Нечего курить',true);return}c.smoked=true;state.energy=Math.min(state.maxEnergy,state.energy+c.smoke);c.mult+=0.15;const base=getStrain(c.wantId)?getStrain(c.wantId).sellPrice:50;c.price=Math.floor(base*c.amount*c.mult*(1+state.rep*0.01));document.getElementById('cust-want').textContent=`Хочет ${c.amount}× ${getStrain(c.wantId)?.name||'товар'} за ${c.price}$ (после покура)`;const btn=document.querySelector('#customer-banner .btn-purple');if(btn)btn.style.display='none';showToast(`🚬 Покурили (−1 со склада) +${c.smoke}⚡`);haptic('medium');save();render()}
-function rejectCustomer(){showToast((state.currentCustomer?.name||'Клиент')+' ушёл');hideCustomerBanner()}
-function handleReferral(){if(!tg?.initDataUnsafe?.start_param)return;const p=tg.initDataUnsafe.start_param;if(!p.startsWith('ref_'))return;const refId=p.replace('ref_','');if(refId===userId||state.referredBy)return;state.referredBy=refId;state.money+=100;state.energy=Math.min(state.maxEnergy,state.energy+30);showToast('🎁 Бонус новичка +100$ +30⚡');haptic('success');save()}
-function getRefLink(){return`https://t.me/${botUsername}?startapp=ref_${userId}`}
-function shareReferral(){const link=getRefLink();if(tg?.openTelegramLink)tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('🌿 Bud Farm Tycoon')}`);else copyReferral()}
-function copyReferral(){navigator.clipboard?.writeText(getRefLink()).then(()=>showToast('Ссылка скопирована')).catch(()=>showToast(getRefLink()))}
-function closeModal(id){document.getElementById(id).classList.remove('show');if(id==='modal-seed'){document.querySelector('#modal-seed .modal-title').textContent='Выбери семя'}}
-function triggerEvent(){if(Math.random()>0.012)return;const events=[{type:'inspection',title:'👮 Проверка',text:'Пришла проверка! Заплати 80$ или потеряй часть товара.',action:'pay'},{type:'bonus',title:'🤑 Удачный день',text:'Случайный клиент оставил чаевые +60$!',action:'bonus'},{type:'energy',title:'⚡ Энергетик',text:'Нашёл энергетик на улице +25⚡',action:'energy'},{type:'raid',title:'🚨 Налёт',text:'Кто-то пытался украсть урожай! Потеряно немного товара.',action:'raid'}];const ev=events[Math.floor(Math.random()*events.length)];if(ev.action==='pay'){if(state.money>=80){state.money-=80;showToast(ev.title+' −80$')}else{const keys=Object.keys(state.inventory);if(keys.length){const k=keys[0];state.inventory[k]=Math.max(0,(state.inventory[k]||0)-2);if(state.inventory[k]<=0)delete state.inventory[k]}showToast(ev.title+' (потерян товар)')}}else if(ev.action==='bonus'){state.money+=60;showToast(ev.title+' +60$')}else if(ev.action==='energy'){state.energy=Math.min(state.maxEnergy,state.energy+25);showToast(ev.title+' +25⚡')}else if(ev.action==='raid'){const keys=Object.keys(state.inventory);if(keys.length){const k=keys[Math.floor(Math.random()*keys.length)];state.inventory[k]=Math.max(0,(state.inventory[k]||0)-1);if(state.inventory[k]<=0)delete state.inventory[k];showToast(ev.title+' −1 товар')}}haptic('warning');save()}
-document.querySelectorAll('.tab').forEach(tab=>{tab.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));tab.classList.add('active');document.getElementById('section-'+tab.dataset.tab).classList.add('active');haptic('light')})});
-setInterval(()=>{if(state.energy<state.maxEnergy)state.energy=Math.min(state.maxEnergy,state.energy+0.35);tickPots();if(state.currentCustomer&&Date.now()>state.currentCustomer.expiresAt){showToast(state.currentCustomer.name+' ушёл');hideCustomerBanner()}if(!state.currentCustomer&&Math.random()<0.06)spawnCustomer();triggerEvent();renderFarm();renderHeader();renderDaily();save()},1000);
-load();initDaily();render();
-window.openSeedModal=openSeedModal;window.closeModal=closeModal;window.plantSeed=plantSeed;window.harvest=harvest;window.waterPot=waterPot;window.openFertModal=openFertModal;window.applyFert=applyFert;window.buyLamp=buyLamp;window.buyFert=buyFert;window.buyEnergy=buyEnergy;window.buyPot=buyPot;window.buyRoomUpgrade=buyRoomUpgrade;window.sellItem=sellItem;window.sellAll=sellAll;window.dealWithCustomer=dealWithCustomer;window.smokeWithCustomer=smokeWithCustomer;window.rejectCustomer=rejectCustomer;window.shareReferral=shareReferral;window.copyReferral=copyReferral;window.processItem=processItem;window.sellProduct=sellProduct;window.claimDaily=claimDaily;window.applyLampToPot=applyLampToPot;window.openLampModal=openLampModal;
-</script>
-</body>
-</html>
+// ============================================================
+// ====== ВСЯ ЛОГИКА ИГРЫ (ОСТАЁТСЯ БЕЗ ИЗМЕНЕНИЙ) ======
+// ============================================================
+
+// ... ВСТАВЬТЕ СЮДА ВЕСЬ JS КОД ИЗ ПРЕДЫДУЩЕЙ ВЕРСИИ ...
+// (он полностью рабочий, я его не меняю)
+
+// ============================================================
+// ====== НОВАЯ ФУНКЦИЯ: ОТРИСОВКА РАСТЕНИЙ В SVG ======
+// ============================================================
+
+function getPlantSVG(strainId, stage, health, disease, ready) {
+  const colors = {
+    skunk: { leaf: '#4caf50', dark: '#2e7d32', flower: '#8bc34a' },
+    haze: { leaf: '#7b1fa2', dark: '#4a148c', flower: '#ce93d8' },
+    widow: { leaf: '#e8f5e9', dark: '#a5d6a7', flower: '#ffffff' },
+    alien: { leaf: '#00bcd4', dark: '#006064', flower: '#4dd0e1' },
+    og: { leaf: '#f57c00', dark: '#e65100', flower: '#ffcc80' }
+  };
+  const c = colors[strainId] || colors.skunk;
+  const healthFactor = health / 100;
+  const isSick = disease;
+  
+  let svg = '';
+  const s = stage || 0;
+  
+  // СТАДИЯ 1: СЕМЯ
+  if (s === 1) {
+    svg = `
+      <svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="50" cy="95" rx="30" ry="10" fill="#3e2723" opacity="0.3"/>
+        <ellipse cx="50" cy="90" rx="10" ry="6" fill="#5d4037"/>
+        <ellipse cx="50" cy="85" rx="6" ry="8" fill="#4caf50" opacity="0.4"/>
+        <circle cx="50" cy="80" r="4" fill="${c.leaf}" opacity="0.8"/>
+        <circle cx="47" cy="78" r="3" fill="${c.dark}" opacity="0.5"/>
+      </svg>
+    `;
+  }
+  // СТАДИЯ 2: РОСТОК
+  else if (s === 2) {
+    svg = `
+      <svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="50" cy="100" rx="32" ry="10" fill="#3e2723" opacity="0.3"/>
+        <line x1="50" y1="95" x2="50" y2="60" stroke="${c.dark}" stroke-width="3" opacity="${healthFactor}"/>
+        <path d="M50 60 Q35 55 30 70 Q40 65 50 60" fill="${c.leaf}" opacity="${healthFactor * 0.8}"/>
+        <path d="M50 60 Q65 55 70 70 Q60 65 50 60" fill="${c.leaf}" opacity="${healthFactor * 0.8}"/>
+        ${isSick ? `<circle cx="50" cy="70" r="12" fill="none" stroke="#e53935" stroke-width="2" opacity="0.6"><animate attributeName="r" from="10" to="14" dur="0.8s" repeatCount="indefinite"/></circle>` : ''}
+      </svg>
+    `;
+  }
+  // СТАДИЯ 3: ВЕГЕТАЦИЯ
+  else if (s === 3) {
+    svg = `
+      <svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="50" cy="105" rx="34" ry="10" fill="#3e2723" opacity="0.3"/>
+        <line x1="50" y1="100" x2="50" y2="45" stroke="${c.dark}" stroke-width="4" opacity="${healthFactor}"/>
+        <path d="M50 55 Q30 45 20 65 Q35 55 50 55" fill="${c.leaf}" opacity="${healthFactor * 0.8}"/>
+        <path d="M50 55 Q70 45 80 65 Q65 55 50 55" fill="${c.leaf}" opacity="${healthFactor * 0.8}"/>
+        <path d="M50 45 Q35 35 28 50 Q40 42 50 45" fill="${c.dark}" opacity="${healthFactor * 0.6}"/>
+        <path d="M50 45 Q65 35 72 50 Q60 42 50 45" fill="${c.dark}" opacity="${healthFactor * 0.6}"/>
+        <path d="M50 70 Q40 65 35 78 Q45 72 50 70" fill="${c.leaf}" opacity="${healthFactor * 0.5}"/>
+        <path d="M50 70 Q60 65 65 78 Q55 72 50 70" fill="${c.leaf}" opacity="${healthFactor * 0.5}"/>
+        ${isSick ? `<circle cx="50" cy="65" r="14" fill="none" stroke="#e53935" stroke-width="2" opacity="0.5"><animate attributeName="r" from="12" to="16" dur="0.8s" repeatCount="indefinite"/></circle>` : ''}
+      </svg>
+    `;
+  }
+  // СТАДИЯ 4: ЦВЕТЕНИЕ
+  else if (s === 4) {
+    svg = `
+      <svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="50" cy="108" rx="36" ry="10" fill="#3e2723" opacity="0.3"/>
+        <line x1="50" y1="103" x2="50" y2="35" stroke="${c.dark}" stroke-width="5" opacity="${healthFactor}"/>
+        <!-- Ветки -->
+        <path d="M50 50 Q30 35 18 55 Q32 48 50 50" fill="${c.leaf}" opacity="${healthFactor * 0.7}"/>
+        <path d="M50 50 Q70 35 82 55 Q68 48 50 50" fill="${c.leaf}" opacity="${healthFactor * 0.7}"/>
+        <path d="M50 65 Q35 55 25 72 Q38 65 50 65" fill="${c.leaf}" opacity="${healthFactor * 0.6}"/>
+        <path d="M50 65 Q65 55 75 72 Q62 65 50 65" fill="${c.leaf}" opacity="${healthFactor * 0.6}"/>
+        <path d="M50 80 Q40 75 35 88 Q45 82 50 80" fill="${c.leaf}" opacity="${healthFactor * 0.5}"/>
+        <path d="M50 80 Q60 75 65 88 Q55 82 50 80" fill="${c.leaf}" opacity="${healthFactor * 0.5}"/>
+        <!-- ЦВЕТЫ -->
+        <circle cx="50" cy="40" r="12" fill="${c.flower}" opacity="${healthFactor * 0.6}"/>
+        <circle cx="50" cy="40" r="6" fill="${c.leaf}" opacity="${healthFactor * 0.4}"/>
+        <circle cx="35" cy="50" r="8" fill="${c.flower}" opacity="${healthFactor * 0.5}"/>
+        <circle cx="65" cy="50" r="8" fill="${c.flower}" opacity="${healthFactor * 0.5}"/>
+        <circle cx="30" cy="68" r="6" fill="${c.flower}" opacity="${healthFactor * 0.4}"/>
+        <circle cx="70" cy="68" r="6" fill="${c.flower}" opacity="${healthFactor * 0.4}"/>
+        ${isSick ? `<circle cx="50" cy="65" r="18" fill="none" stroke="#e53935" stroke-width="2" opacity="0.5"><animate attributeName="r" from="15" to="20" dur="0.8s" repeatCount="indefinite"/></circle>` : ''}
+      </svg>
+    `;
+  }
+  // СТАДИЯ 5: ГОТОВО (урожай)
+  else if (s === 5) {
+    svg = `
+      <svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="50" cy="108" rx="38" ry="10" fill="#3e2723" opacity="0.3"/>
+        <line x1="50" y1="103" x2="50" y2="30" stroke="${c.dark}" stroke-width="5" opacity="${healthFactor}"/>
+        <path d="M50 45 Q25 30 15 55 Q32 45 50 45" fill="${c.leaf}" opacity="${healthFactor * 0.6}"/>
+        <path d="M50 45 Q75 30 85 55 Q68 45 50 45" fill="${c.leaf}" opacity="${healthFactor * 0.6}"/>
+        <path d="M50 60 Q30 48 20 70 Q38 60 50 60" fill="${c.leaf}" opacity="${healthFactor * 0.5}"/>
+        <path d="M50 60 Q70 48 80 70 Q62 60 50 60" fill="${c.leaf}" opacity="${healthFactor * 0.5}"/>
+        <!-- БОЛЬШИЕ ЦВЕТЫ / ШИШКИ -->
+        <circle cx="50" cy="35" r="16" fill="${c.flower}" opacity="${healthFactor * 0.7}" filter="url(#glow)"/>
+        <circle cx="50" cy="35" r="8" fill="${c.leaf}" opacity="0.5"/>
+        <circle cx="30" cy="50" r="10" fill="${c.flower}" opacity="${healthFactor * 0.6}"/>
+        <circle cx="70" cy="50" r="10" fill="${c.flower}" opacity="${healthFactor * 0.6}"/>
+        <circle cx="25" cy="70" r="8" fill="${c.flower}" opacity="${healthFactor * 0.5}"/>
+        <circle cx="75" cy="70" r="8" fill="${c.flower}" opacity="${healthFactor * 0.5}"/>
+        <circle cx="42" cy="55" r="7" fill="${c.flower}" opacity="${healthFactor * 0.4}"/>
+        <circle cx="58" cy="55" r="7" fill="${c.flower}" opacity="${healthFactor * 0.4}"/>
+        <!-- ЗВЁЗДОЧКИ ГОТОВНОСТИ -->
+        ${ready ? `<text x="50" y="20" font-size="16" text-anchor="middle" fill="#ffd700">✨</text>` : ''}
+        <defs>
+          <filter id="glow">
+            <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="${c.flower}" flood-opacity="0.6"/>
+          </filter>
+        </defs>
+        ${isSick ? `<circle cx="50" cy="65" r="22" fill="none" stroke="#e53935" stroke-width="2" opacity="0.4"><animate attributeName="r" from="18" to="24" dur="0.8s" repeatCount="indefinite"/></circle>` : ''}
+      </svg>
+    `;
+  }
+  
+  return svg;
+}
+
+// ============================================================
+// ====== ПЕРЕОПРЕДЕЛЯЕМ renderFarm ДЛЯ SVG ======
+// =================================
