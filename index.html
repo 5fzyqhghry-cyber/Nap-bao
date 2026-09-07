@@ -6,21 +6,8 @@
 <title>🌿 Grow Simulator 2.0</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-:root {
-  --bg: #0d1a0d;
-  --text: #e0e0e0;
-  --hint: #8a9a8a;
-  --button: #2e7d32;
-  --button-text: #fff;
-  --secondary: #1a2e1a;
-  --accent: #4caf50;
-  --danger: #e53935;
-  --warning: #ffb300;
-  --purple: #7b1fa2;
-  --blue: #1e88e5;
-  --soil: #3e2723;
-  --pot-color: #5d4037;
-}
+/* ====== ВСЕ СТИЛИ ====== */
+:root{--bg:#0d1a0d;--text:#e0e0e0;--hint:#8a9a8a;--button:#2e7d32;--button-text:#fff;--secondary:#1a2e1a;--accent:#4caf50;--danger:#e53935;--warning:#ffb300;--purple:#7b1fa2;--blue:#1e88e5;--soil:#3e2723;--pot-color:#5d4037}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:20px;overflow-x:hidden}
 .header{position:sticky;top:0;z-index:100;background:rgba(13,26,13,0.92);backdrop-filter:blur(12px);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(76,175,80,0.2)}
@@ -244,8 +231,8 @@ let botUsername = 'Rastaboishan_bot';
 if(tg){tg.ready();tg.expand();try{tg.setHeaderColor('secondary_bg_color')}catch(e){}if(tg.initDataUnsafe?.user?.id)userId=String(tg.initDataUnsafe.user.id)}
 
 function haptic(t='light'){try{if(tg?.HapticFeedback){if(t==='success')tg.HapticFeedback.notificationOccurred('success');else if(t==='error')tg.HapticFeedback.notificationOccurred('error');else tg.HapticFeedback.impactOccurred(t)}}catch(e){}}
-function save(){state.lastUpdate=Date.now();localStorage.setItem('grow_sim_v2_'+userId,JSON.stringify(state))}
-function load(){const raw=localStorage.getItem('grow_sim_v2_'+userId);if(raw){try{const l=JSON.parse(raw);state={...state,...l}}catch(e){}}handleReferral();if(state.pots.length===0){addInitialPots()}}
+function save(){state.lastUpdate=Date.now();try{localStorage.setItem('grow_sim_v2_'+userId,JSON.stringify(state))}catch(e){}}
+function load(){try{const raw=localStorage.getItem('grow_sim_v2_'+userId);if(raw){const l=JSON.parse(raw);state={...state,...l}}}catch(e){}handleReferral();if(state.pots.length===0){addInitialPots()}}
 function addInitialPots(){state.pots.push({id:state.nextPotId++,strain:null,plantedAt:null,water:100,health:100,stage:0,disease:false,lamp:null,fert:null,speedMult:1,yieldMult:1,lastTick:Date.now(),_lastWarning:null,potType:1})}
 function showToast(m,err=false){const t=document.getElementById('toast');t.textContent=m;t.className='toast show'+(err?' error':'');setTimeout(()=>t.classList.remove('show'),2200)}
 function formatTime(s){if(s<=0)return'Готово!';const m=Math.floor(s/60),sec=Math.floor(s%60);return m>0?`${m}м ${sec}с`:`${sec}с`}
@@ -401,6 +388,11 @@ function getPlantSVG(strainId, stage, health, disease, ready) {
 function renderFarm(){
   const grid=document.getElementById('farm-grid');
   grid.innerHTML='';
+  if(state.pots.length===0){
+    grid.innerHTML='<div class="empty"><div class="empty-emoji">🪴</div>Нет горшков!<br><small>Нажми "Купить горшок" ниже</small></div>';
+    document.getElementById('btn-buy-pot').textContent='➕ Купить горшок (350$)';
+    return;
+  }
   state.pots.forEach(pot=>{
     const div=document.createElement('div');
     const pt=getPotType(pot.potType)||POT_TYPES[0];
@@ -496,7 +488,9 @@ function renderFarm(){
     }
     grid.appendChild(div);
   });
-  document.getElementById('btn-buy-pot').textContent='➕ Купить горшок ('+(350+state.pots.length*100)+'$)';
+  const maxType = getPotType(state.level >= 8 ? 5 : state.level >= 6 ? 4 : state.level >= 4 ? 3 : state.level >= 2 ? 2 : 1);
+  const price = (maxType?.price || 0) + state.pots.length * 100;
+  document.getElementById('btn-buy-pot').textContent='➕ Купить горшок ('+price+'$)';
 }
 
 function renderShop(){
